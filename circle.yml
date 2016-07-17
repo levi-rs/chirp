@@ -1,0 +1,32 @@
+machine:
+  python:
+    version: 3.5.0
+
+general:
+  artifacts:
+    - .tox/tox/junit.xml
+    - .tox/tox/flake8.txt
+    - .tox/coverage.xml
+
+dependencies:
+  override:
+    - pip install --upgrade pip
+    - pip install --upgrade tox
+    - pip install --upgrade python-coveralls
+
+test:
+  override:
+    - tox -r
+  post:
+  - coveralls
+  - mkdir -p $CIRCLE_TEST_REPORTS/chirp
+  - cp .tox/tox/junit.xml $CIRCLE_TEST_REPORTS/chirp
+  - cp .tox/tox/flake8.txt $CIRCLE_TEST_REPORTS/chirp
+  - cp -R htmlcov $CIRCLE_TEST_REPORTS/chirp
+  - cp coverage.xml $CIRCLE_TEST_REPORTS/chirp
+
+deployment:
+  production:
+    branch: master
+    commands:
+      -  ssh $DEPLOY_HOST $DEPLOY_PATH/deploy.sh
