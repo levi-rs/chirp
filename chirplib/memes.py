@@ -22,6 +22,9 @@ class Meme(object):  # pylint: disable=R0903
     def format_for_slack(self):
         return repr(self)
 
+    def format_for_twitter(self):
+        return "#memes #{0}".format(self.source), self.link
+
 
 class DankMeme(Meme):  # pylint: disable=too-few-public-methods
     """
@@ -89,6 +92,31 @@ class ImgurMeme(Meme):
             if self.image_count and self.image_count > 1:
                 return_str += "\n{0} more at {1}".format(self.image_count - 1, self.link)
             return return_str
+
+        else:
+            exc_str = "Imgur link type not recognized: {0}"
+            raise TypeError(exc_str.format(self.link_type))
+
+    def format_for_twitter(self):
+        """
+        Formats meme into a string to be posted to twitter
+        """
+        if not self._digested:
+            exc_str = "You must digest ImgurMeme objects before attempting to" + \
+                      "run img_obj.format_for_slack(). See img_obj.digest()"
+            raise UndigestedError(exc_str)
+
+        elif self.link_type == self.DIRECT_LINK:
+            return "#memes #{0}".format(self.source), self.link
+
+        elif self.link_type == self.IMAGE_LINK:
+            return "#memes #{0}".format(self.source), self.first_image_link
+
+        elif self.link_type == self.ALBUM_LINK or self.link_type == self.GALLERY_LINK:
+            return_str = "#memes #{0}".format(self.source)
+            if self.image_count and self.image_count > 1:
+                return_str += "\n{0} more at {1}".format(self.image_count - 1, self.link)
+            return return_str, self.first_image_link
 
         else:
             exc_str = "Imgur link type not recognized: {0}"

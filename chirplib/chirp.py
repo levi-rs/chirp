@@ -4,9 +4,9 @@ import random
 from datetime import datetime as dt
 
 import praw
+import twitter
 import MySQLdb as mdb
 from retryz import retry
-from slacker import Slacker
 from praw.errors import HTTPException
 
 from chirplib.memes import ImgurMeme, DankMeme, UndigestedError
@@ -19,8 +19,7 @@ class Chirp(object):  # pylint: disable=R0902, R0903
     def __init__(self, config, logger):
         # pylint: disable=too-many-instance-attributes
 
-        # self.slack_token = config['slack']['token']
-        # self.channel = config['slack']['channel']
+        self.twitter = config['twitter']
 
         self.database = config['mysql']['database']
         self.username = config['mysql']['username']
@@ -73,8 +72,8 @@ class Chirp(object):  # pylint: disable=R0902, R0903
             except Exception:  # pylint: disable=C0103, W0612, W0703
                 self.logger.exception("Caught exception while digesting Imgur meme")
 
-        # Post to slack
-        #return self.post_to_twitter(pared_memes)
+        # Post to twitter
+        return self.post_to_twitter(pared_memes)
 
     def get_memes(self):
         '''
@@ -171,24 +170,27 @@ class Chirp(object):  # pylint: disable=R0902, R0903
         Post the memes to twitter
         '''
         # TODO: replace slack stuff with twitter stuff
-        log = "Posting {0} memes to slack:\n\t{1}"
+        log = "Posting {0} memes to twitter:\n\t{1}"
         self.logger.info(log.format(len(memes), "\n\t".join([str(m) for m in memes])))
         ret_status = False
 
-        slack = Slacker(self.slack_token)
-        for meme in memes:
+        api = twitter.Api(consumer_key=self.twitter['consumer_key'],
+                          consumer_secret=self.twitter['consumer_secret'],
+                          access_token_key=self.twitter['access_token_key'],
+                          access_token_secret=self.twitter['access_token_secret'])
 
+        for meme in memes:
             try:
-                message = meme.format_for_slack()
+                message, media_link = meme.format_for_twitter()
             except UndigestedError:
                 log = "Caught exception while formatting Imgur meme"
                 self.logger.exception(log)
 
-                message = "from {0}: {1}".format(meme.source, meme.link)
+                message, media_link = "#memes #{0}".format(meme.source), meme.link
 
-            resp = slack.chat.post_message(self.channel, message, as_user=True)
+            resp = api.PostUpdate(status=message, media=media_link)
 
-            if resp.successful:
+            if "ID" in resp:
                 self.add_to_collection(meme)
                 ret_status = True
 

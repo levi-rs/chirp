@@ -20,7 +20,7 @@ def configure_logger():
     # Formatting
     formatter = logging.Formatter('[%(levelname)s %(asctime)s] %(message)s')
 
-   # Set up STDOUT handler
+    # Set up STDOUT handler
     stdout_handler = logging.StreamHandler(sys.stdout)
     stdout_handler.setLevel(logging.DEBUG)
     stdout_handler.setFormatter(formatter)
