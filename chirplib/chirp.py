@@ -188,9 +188,13 @@ class Chirp(object):  # pylint: disable=R0902, R0903
 
                 message, media_link = "#memes #{0}".format(meme.source), meme.link
 
-            resp = api.PostUpdate(status=message, media=media_link)
-
-            if "ID" in resp:
+            try:
+                api.PostUpdate(status=message, media=media_link)
+            except:
+                log = "Caught exception while posting to Twitter"
+                self.logger.exception(log)
+                ret_status = False
+            else:
                 self.add_to_collection(meme)
                 ret_status = True
 
