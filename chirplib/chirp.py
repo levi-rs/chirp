@@ -186,7 +186,7 @@ class Chirp(object):  # pylint: disable=R0902, R0903
                 log = "Caught exception while formatting Imgur meme"
                 self.logger.exception(log)
 
-                message, media_link = "#memes #dankmems #funny #{0}".format(meme.source), meme.link
+                message, media_link = "#memes #dankmemes #funny #{0}".format(meme.source), meme.link
 
             try:
                 api.PostUpdate(status=message, media=media_link)
