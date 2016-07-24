@@ -7,9 +7,13 @@ import praw
 import twitter
 import MySQLdb as mdb
 from retryz import retry
+from twitter import TwitterError
 from praw.errors import HTTPException
 
 from chirplib.memes import ImgurMeme, DankMeme, UndigestedError
+
+IN_DB = "In database"
+POSTED = "Posted"
 
 
 class Chirp(object):  # pylint: disable=R0902, R0903
@@ -42,43 +46,65 @@ class Chirp(object):  # pylint: disable=R0902, R0903
     def find_and_post_memes(self):
         """ Find memes from subreddits and post them to Twitter
         """
-        # Check for most recent dank memes
-        memes = self.get_memes()
-        self.logger.info("Found {0} memes".format(len(memes)))
-
-        # Filter out any known dank memes
-        filtered_memes = [m for m in memes if not self.in_collection(m)]
-        self.logger.info(
-            "Removed {0} known memes".format(len(memes) - len(filtered_memes)))
-
-        # Shuffle memes
-        random.shuffle(filtered_memes)
-
-        # Cut down to the max memes
-        pared_memes = filtered_memes[:self.max_memes]
-        self.logger.info("Truncated to {0} memes".format(len(pared_memes)))
-
-        # Bale here if nothing is left
-        if not pared_memes:
-            self.logger.info("No fresh memes to post, exiting")
-            return False
-
-        # If any memes are Imgur memes, get more information
-        for meme in [meme for meme in pared_memes if isinstance(meme, ImgurMeme)]:
-            log = "Attempting to get more info on Imgur meme: {0}"
-            self.logger.info(log.format(meme))
+        for meme in self._meme_gen():
             try:
-                meme.digest()
+                ret_status = self.post_to_twitter(meme)
+            except TwitterError:
+                self.logger.exception("Caught TwitterError:")
+                continue
+
+            if ret_status:
+                break
+        else:
+            log = "Couldn't find a fresh meme to post. Exiting"
+            self.logger.info(log)
+
+    def _meme_gen(self):
+        """ Meme generator. Queries subreddits and tracks supplied memes
+        """
+        sr_memes = {sub: None for sub in self.subreddits}
+
+        keep_generating = True
+        while keep_generating:
+            # Pick a random subreddit that might still have viable memes
+            unchecked = [sub for sub in self.subreddits if sr_memes[sub] is None]
+            incomplete = [sub for sub in self.subreddits if sub not in unchecked]
+            incomplete = [sub for sub in incomplete if not all(sr_memes[sub].values())]
+            sub = random.choice(unchecked + incomplete)
+
+            # If we haven't already, get memes for that subreddit
+            if sr_memes[sub] is None:
+                sr_memes[sub] = dict()
+                memes = self._get_subreddit_memes(sub)
+                for meme in memes:
+                    sr_memes[sub][meme] = IN_DB if self.in_collection(meme) else None
+
+            # Get a meme
+            memes = [m for m in sr_memes[sub] if sr_memes[sub][m] is None]
+            meme = random.sample(memes, len(memes))[0]
+
+            try:
+                if isinstance(meme, ImgurMeme):
+                    meme.digest()
             except Exception:  # pylint: disable=C0103, W0612, W0703
                 self.logger.exception("Caught exception while digesting Imgur meme")
+            else:
+                yield meme
+            finally:
+                sr_memes[sub][meme] = POSTED
 
-        # Post to twitter
-        return self.post_to_twitter(pared_memes)
+            # Check to see if we should exit
+            # Are all the subreddits in the tracking dict?
+            all_subs = all([sr_memes[sub] is not None for sub in self.subreddits])
+            # Have we attempted to post all the memes in the tracking dict?
+            all_tried = all([all(sub.values()) for sub in sr_memes.values() if sub is not None])
+            keep_generating = not all_subs or not all_tried
 
-    def get_memes(self):
+    def _get_subreddit_memes(self, subreddit):
         '''
-        Collect top memes from subreddits specified in chirp.ini
+        Collect top memes from subreddit
         '''
+        self.logger.debug("Collecting memes from subreddit: {0}".format(subreddit))
 
         # Build the user_agent, this is important to conform to Reddit's rules
         user_agent = 'linux:chirpscraper:0.0.1 (by /u/IHKAS1984)'
@@ -87,26 +113,23 @@ class Chirp(object):  # pylint: disable=R0902, R0903
         # Create connection object
         r_client = praw.Reddit(user_agent=user_agent)
 
-        memes = list()
-
         # Get list of memes, filtering out NSFW entries
-        for sub in self.subreddits:
-            self.logger.debug("Collecting memes from subreddit: {0}".format(sub))
-            try:
-                subreddit_memes = self._get_memes_from_subreddit(r_client, sub)
-            except HTTPException:
-                log = "API failed to get memes for subreddit: {0}"
-                self.logger.exception(log.format(sub))
+        try:
+            subreddit_memes = self._get_memes_from_subreddit(r_client, subreddit)
+        except HTTPException:
+            log = "API failed to get memes for subreddit: {0}"
+            self.logger.exception(log.format(subreddit))
+            return
+
+        memes = list()
+        for meme in subreddit_memes:
+            if meme.over_18 and not self.include_nsfw:
                 continue
 
-            for meme in subreddit_memes:
-                if meme.over_18 and not self.include_nsfw:
-                    continue
-
-                if "imgur.com/" in meme.url:
-                    memes.append(ImgurMeme(meme.url, sub))
-                else:
-                    memes.append(DankMeme(meme.url, sub))
+            if "imgur.com/" in meme.url:
+                memes.append(ImgurMeme(meme.url, subreddit))
+            else:
+                memes.append(DankMeme(meme.url, subreddit))
 
         return memes
 
@@ -165,37 +188,36 @@ class Chirp(object):  # pylint: disable=R0902, R0903
 
         return
 
-    def post_to_twitter(self, memes):
+    def post_to_twitter(self, meme):
         '''
         Post the memes to twitter
         '''
-        # TODO: replace slack stuff with twitter stuff
-        log = "Posting {0} memes to twitter:\n\t{1}"
-        self.logger.info(log.format(len(memes), "\n\t".join([str(m) for m in memes])))
-        ret_status = False
+        log = "Posting meme to twitter:\n\t{0}"
+        self.logger.info(log.format(meme))
 
         api = twitter.Api(consumer_key=self.twitter['consumer_key'],
                           consumer_secret=self.twitter['consumer_secret'],
                           access_token_key=self.twitter['access_token_key'],
                           access_token_secret=self.twitter['access_token_secret'])
 
-        for meme in memes:
-            try:
-                message, media_link = meme.format_for_twitter()
-            except UndigestedError:
-                log = "Caught exception while formatting Imgur meme"
-                self.logger.exception(log)
+        try:
+            message, media_link = meme.format_for_twitter()
+        except UndigestedError:
+            log = "Caught exception while formatting Imgur meme"
+            self.logger.exception(log)
+            message = "#memes #dankmemes #funny #{0}".format(meme.source)
+            media_link = meme.link
 
-                message, media_link = "#memes #dankmemes #funny #{0}".format(meme.source), meme.link
-
-            try:
-                api.PostUpdate(status=message, media=media_link)
-            except:
-                log = "Caught exception while posting to Twitter"
-                self.logger.exception(log)
-                ret_status = False
-            else:
-                self.add_to_collection(meme)
-                ret_status = True
+        try:
+            api.PostUpdate(status=message, media=media_link)
+        except TwitterError:
+            raise
+        except Exception:
+            log = "Caught exception while posting to Twitter"
+            self.logger.exception(log)
+            ret_status = False
+        else:
+            self.add_to_collection(meme)
+            ret_status = True
 
         return ret_status

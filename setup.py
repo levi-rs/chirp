@@ -18,9 +18,9 @@ setup(
     install_requires=[
         'praw',
         'retryz',
-        'python-twitter',
         'mysqlclient',
         'imgurpython',
+        'python-twitter',
         'configparser>=3.5.0b2',
     ],
 )
