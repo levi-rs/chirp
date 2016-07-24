@@ -13,6 +13,9 @@ class Meme(object):  # pylint: disable=R0903
         self.link = link
         self.source = source
 
+    def __hash__(self):
+        return hash((self.link, self.source))
+
     def __str__(self):
         return str(self.link)
 
