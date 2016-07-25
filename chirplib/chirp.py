@@ -10,7 +10,7 @@ from retryz import retry
 from twitter import TwitterError
 from praw.errors import HTTPException
 
-from chirplib.memes import ImgurMeme, DankMeme, UndigestedError
+from chirplib.memes import ImgurMeme, GiphyMeme, DankMeme, UndigestedError
 
 IN_DB = "In database"
 POSTED = "Posted"
@@ -128,6 +128,8 @@ class Chirp(object):  # pylint: disable=R0902, R0903
 
             if "imgur.com/" in meme.url:
                 memes.append(ImgurMeme(meme.url, subreddit))
+            elif "giphy.com/" in meme.url:
+                memes.append(GiphyMeme(meme.url, subreddit))
             else:
                 memes.append(DankMeme(meme.url, subreddit))
 
