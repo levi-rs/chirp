@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import sys
+import time
 import logging
 from os import path
 from configparser import ConfigParser
@@ -40,6 +41,7 @@ def configure_logger():
 
 
 def main():
+    begin = time.time()
     # Setup the logger
     logger = configure_logger()
 
@@ -55,6 +57,8 @@ def main():
         Chirp(config, logger).find_and_post_memes()
     except Exception:  # pylint: disable=W0703
         logger.exception("Caught exception:")
+
+    logger.info("Chirp run completed in {0}".format(time.time()-begin))
 
 
 if __name__ == "__main__":
