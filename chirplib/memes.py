@@ -6,8 +6,7 @@ class UndigestedError(Exception):
 
 
 class Meme(object):  # pylint: disable=R0903
-    """
-    Base class for meme objects
+    """ Base class for meme objects
     """
     def __init__(self, link, source):
         self.link = link
@@ -30,15 +29,23 @@ class Meme(object):  # pylint: disable=R0903
 
 
 class DankMeme(Meme):  # pylint: disable=too-few-public-methods
-    """
-    Regular, run of the mill memes
+    """ Regular, run of the mill memes
     """
     pass
 
 
-class ImgurMeme(Meme):
+class GiphyMeme(Meme):
+    """ Giphy memes
     """
-    Base class for Imgur meme types
+    def format_for_twitter(self):
+        # Example link: http://giphy.com/gifs/funny-lol-gif-fJIZa8yIfiEFi
+        giphy_hash = self.link.split('-')[-1]
+        twitter_link = "https://media.giphy.com/media/{0}/giphy.gif".format(giphy_hash)
+        return "#memes #dankmemes #funny #{0}".format(self.source), twitter_link
+
+
+class ImgurMeme(Meme):
+    """ Imgur meme types
     """
     # Imgur link types
     DIRECT_LINK = "direct link"
