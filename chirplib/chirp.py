@@ -15,6 +15,7 @@ from chirplib.memes import (DankMeme,
                             ImgurMeme,
                             RedditUploadsMeme,
                             ShowerThoughtsMeme,
+                            YoutubeMeme,
                             UndigestedError)
 
 IN_DB = "In database"
@@ -132,18 +133,26 @@ class Chirp(object):  # pylint: disable=R0902, R0903
                 continue
             elif "/comments/" in meme.url:
                 continue
-            elif "i.reddituploads.com/" in meme.url:
-                memes.append(RedditUploadsMeme(meme.url, subreddit))
-            elif "imgur.com/" in meme.url:
-                memes.append(ImgurMeme(meme.url, subreddit))
-            elif "giphy.com/" in meme.url:
-                memes.append(GiphyMeme(meme.url, subreddit))
-            elif subreddit == "showerthoughts":
-                memes.append(ShowerThoughtsMeme(meme.title, meme.url, subreddit))
             else:
-                memes.append(DankMeme(meme.url, subreddit))
+                memes.append(self._get_meme_object(meme, subreddit))
 
         return memes
+
+    def _get_meme_object(meme, subreddit):
+        if "youtube.com/" in meme.url or "youtu.be/" in meme.url:
+            meme_obj = YoutubeMeme(meme.url, subreddit)
+        elif "i.reddituploads.com/" in meme.url:
+            meme_obj = RedditUploadsMeme(meme.url, subreddit)
+        elif "imgur.com/" in meme.url:
+            meme_obj = ImgurMeme(meme.url, subreddit)
+        elif "giphy.com/" in meme.url:
+            meme_obj = GiphyMeme(meme.url, subreddit)
+        elif subreddit == "showerthoughts":
+            meme_obj = ShowerThoughtsMeme(meme.title, meme.url, subreddit)
+        else:
+            meme_obj = DankMeme(meme.url, subreddit)
+
+        return meme_obj
 
     @staticmethod
     @retry(on_error=HTTPException, limit=3, wait=2)
