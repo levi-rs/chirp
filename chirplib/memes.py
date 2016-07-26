@@ -1,5 +1,7 @@
+import imghdr
+from tempfile import NamedTemporaryFile
+
 import requests
-from io import BytesIO
 from imgurpython import ImgurClient
 
 
@@ -67,8 +69,11 @@ class RedditUploadsMeme(Meme):
         resp = requests.get(self.link)
         resp.raise_for_status()
 
-        f = BytesIO(resp.content)
-        return "#memes #dankmemes #funny #{0}".format(self.source), f
+        with NamedTemporaryFile() as tf:
+            tf.write(resp.content)
+            new_url = "{0}.{1}".format(self.link, imghdr.what(tf.name))
+
+        return "#memes #dankmemes #funny #{0}".format(self.source), new_url
 
 
 class ImgurMeme(Meme):

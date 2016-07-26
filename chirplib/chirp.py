@@ -130,8 +130,7 @@ class Chirp(object):  # pylint: disable=R0902, R0903
         for meme in subreddit_memes:
             if meme.over_18 and not self.include_nsfw:
                 continue
-
-            if "/comments/" in meme.url:
+            elif "/comments/" in meme.url:
                 continue
             elif "i.reddituploads.com/" in meme.url:
                 memes.append(RedditUploadsMeme(meme.url, subreddit))
