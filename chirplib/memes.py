@@ -1,3 +1,5 @@
+import requests
+from io import BytesIO
 from imgurpython import ImgurClient
 
 
@@ -53,6 +55,20 @@ class ShowerThoughtsMeme(Meme):
 
     def format_for_twitter(self):
         return "{0}\n\n#showerthoughts #funny".format(self.text), None
+
+
+class RedditUploadsMeme(Meme):
+    """ Reddit Uploads Memes
+    """
+    def format_for_twitter(self):
+        """ URLs from reddituploads.com are odd. Download the file, and yield a
+            file-like object to upload to Twitter
+        """
+        resp = requests.get(self.link)
+        resp.raise_for_status()
+
+        f = BytesIO(resp.content)
+        return "#memes #dankmemes #funny #{0}".format(self.source), f
 
 
 class ImgurMeme(Meme):
