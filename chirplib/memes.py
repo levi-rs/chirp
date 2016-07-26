@@ -48,6 +48,13 @@ class GiphyMeme(Meme):
         return "#memes #dankmemes #funny #{0}".format(self.source), twitter_link
 
 
+class YoutubeMeme(Meme):
+    """ Youtube memes
+    """
+    def format_for_twitter(self):
+        return "#memes #dankmemes #funny #{0} {1}".format(self.source, self.link), None
+
+
 class ShowerThoughtsMeme(Meme):
     """ Shower Thoughts Memes
     """
