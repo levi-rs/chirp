@@ -52,7 +52,7 @@ class ShowerThoughtsMeme(Meme):
         self.text = text
 
     def format_for_twitter(self):
-        return "{0}\n\n#showerthoughts #funny".format(self.text)
+        return "{0}\n\n#showerthoughts #funny".format(self.text), None
 
 
 class ImgurMeme(Meme):
