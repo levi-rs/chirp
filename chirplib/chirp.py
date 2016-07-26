@@ -138,6 +138,7 @@ class Chirp(object):  # pylint: disable=R0902, R0903
 
         return memes
 
+    @staticmethod
     def _get_meme_object(meme, subreddit):
         if "youtube.com/" in meme.url or "youtu.be/" in meme.url:
             meme_obj = YoutubeMeme(meme.url, subreddit)
