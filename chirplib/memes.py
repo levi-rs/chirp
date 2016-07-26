@@ -44,6 +44,17 @@ class GiphyMeme(Meme):
         return "#memes #dankmemes #funny #{0}".format(self.source), twitter_link
 
 
+class ShowerThoughtsMeme(Meme):
+    """ Shower Thoughts Memes
+    """
+    def __init__(self, text, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.text = text
+
+    def format_for_twitter(self):
+        return "{0}\n\n#showerthoughts #funny".format(self.text)
+
+
 class ImgurMeme(Meme):
     """ Imgur meme types
     """
