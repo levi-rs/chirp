@@ -18,6 +18,7 @@ setup(
     install_requires=[
         'praw',
         'retryz',
+        'requests',
         'mysqlclient',
         'imgurpython',
         'python-twitter',
