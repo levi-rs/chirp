@@ -149,16 +149,22 @@ class ImgurMeme(Meme):
             raise UndigestedError(exc_str)
 
         elif self.link_type == self.DIRECT_LINK:
-            return "#memes #dankmemes #funny #{0}".format(self.source), self.link
+            link = self.link
+            link = link[:-1] if link.endswith(".gifv") else link
+            return "#memes #dankmemes #funny #{0}".format(self.source), link
 
         elif self.link_type == self.IMAGE_LINK:
-            return "#memes #dankmemes #funny #{0}".format(self.source), self.first_image_link
+            link = self.first_image_link
+            link = link[:-1] if link.endswith(".gifv") else link
+            return "#memes #dankmemes #funny #{0}".format(self.source), link
 
         elif self.link_type == self.ALBUM_LINK or self.link_type == self.GALLERY_LINK:
             return_str = "#memes #dankmemes #funny #{0}".format(self.source)
             if self.image_count and self.image_count > 1:
                 return_str += "\n{0} more at {1}".format(self.image_count - 1, self.link)
-            return return_str, self.first_image_link
+            link = self.first_image_link
+            link = link[:-1] if link.endswith(".gifv") else link
+            return return_str, link
 
         else:
             exc_str = "Imgur link type not recognized: {0}"
