@@ -86,7 +86,7 @@ class Chirp(object):  # pylint: disable=R0902, R0903
                     sr_memes[sub][meme] = IN_DB if self.in_collection(meme) else None
 
                 # Make sure we have fresh memes to post
-                if None not in sr_memes[sub][meme].values():
+                if None not in sr_memes[sub].values():
                     continue
 
             # Get a meme
