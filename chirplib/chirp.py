@@ -85,6 +85,10 @@ class Chirp(object):  # pylint: disable=R0902, R0903
                 for meme in memes:
                     sr_memes[sub][meme] = IN_DB if self.in_collection(meme) else None
 
+                # Make sure we have fresh memes to post
+                if None not in sr_memes[sub][meme].values():
+                    continue
+
             # Get a meme
             memes = [m for m in sr_memes[sub] if sr_memes[sub][m] is None]
             meme = random.sample(memes, len(memes))[0]
