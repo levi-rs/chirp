@@ -231,7 +231,7 @@ class Chirp(object):  # pylint: disable=R0902, R0903
         except UndigestedError:
             log = "Caught exception while formatting Imgur meme"
             self.logger.exception(log)
-            message = "#wmt #memes #dankmemes #funny #{0}".format(meme.source)
+            message = "#memes #dankmemes #funny #{0}".format(meme.source)
             media_link = meme.link
 
         try:
