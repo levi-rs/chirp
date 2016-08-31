@@ -29,7 +29,7 @@ class Meme(object):  # pylint: disable=R0903
         return repr(self)
 
     def format_for_twitter(self):
-        return "#wmt #memes #dankmemes #funny #{0}".format(self.source), self.link
+        return "#memes #dankmemes #funny #{0}".format(self.source), self.link
 
 
 class DankMeme(Meme):  # pylint: disable=too-few-public-methods
@@ -45,14 +45,14 @@ class GiphyMeme(Meme):
         # Example link: http://giphy.com/gifs/funny-lol-gif-fJIZa8yIfiEFi
         giphy_hash = self.link.split('-')[-1]
         twitter_link = "https://media.giphy.com/media/{0}/giphy.gif".format(giphy_hash)
-        return "#wmt #memes #dankmemes #funny #{0}".format(self.source), twitter_link
+        return "#memes #dankmemes #funny #{0}".format(self.source), twitter_link
 
 
 class YoutubeMeme(Meme):
     """ Youtube memes
     """
     def format_for_twitter(self):
-        return "#wmt #memes #dankmemes #funny #{0} {1}".format(self.source, self.link), None
+        return "#memes #dankmemes #funny #{0} {1}".format(self.source, self.link), None
 
 
 class ShowerThoughtsMeme(Meme):
@@ -80,7 +80,7 @@ class RedditUploadsMeme(Meme):
             tf.write(resp.content)
             new_url = "{0}.{1}".format(self.link, imghdr.what(tf.name))
 
-        return "#wmt #memes #dankmemes #funny #{0}".format(self.source), new_url
+        return "#memes #dankmemes #funny #{0}".format(self.source), new_url
 
 
 class ImgurMeme(Meme):
@@ -158,15 +158,15 @@ class ImgurMeme(Meme):
         elif self.link_type == self.DIRECT_LINK:
             link = self.link
             link = link[:-1] if link.endswith(".gifv") else link
-            return "#wmt #memes #dankmemes #funny #{0}".format(self.source), link
+            return "#memes #dankmemes #funny #{0}".format(self.source), link
 
         elif self.link_type == self.IMAGE_LINK:
             link = self.first_image_link
             link = link[:-1] if link.endswith(".gifv") else link
-            return "#wmt #memes #dankmemes #funny #{0}".format(self.source), link
+            return "#memes #dankmemes #funny #{0}".format(self.source), link
 
         elif self.link_type == self.ALBUM_LINK or self.link_type == self.GALLERY_LINK:
-            return_str = "#wmt #memes #dankmemes #funny #{0}".format(self.source)
+            return_str = "#memes #dankmemes #funny #{0}".format(self.source)
             if self.image_count and self.image_count > 1:
                 return_str += "\n{0} more at {1}".format(self.image_count - 1, self.link)
             link = self.first_image_link
