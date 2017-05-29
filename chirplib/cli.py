@@ -7,7 +7,10 @@ from os import path
 from configparser import ConfigParser
 from logging.handlers import RotatingFileHandler
 
+from raven import Client
+
 from chirplib.chirp import Chirp
+from chirplib import __version__ as chirp_version
 
 LOG_FILE = "/var/log/chirp/chirp.log"
 
@@ -57,6 +60,10 @@ def main():
         Chirp(config, logger).find_and_post_memes()
     except Exception:  # pylint: disable=W0703
         logger.exception("Caught exception:")
+        if 'sentry' in config:
+            key, secret = config['sentry']['key'], config['sentry']['secret']
+            url = 'https://{0}:{1}@sentry.io/173421'.format(key, secret)
+            Client(url, release=chirp_version).captureException()
 
     logger.info("Chirp run completed in {0}".format(time.time()-begin))
 
