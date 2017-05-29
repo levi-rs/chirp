@@ -16,12 +16,13 @@ setup(
         ]
     },
     install_requires=[
-        'praw',
+        'configparser>=3.5.0',
+        'imgurpython',
+        'mysqlclient',
+        'praw==3.6.0',
+        'python-twitter',
+        'raven',
         'retryz',
         'requests',
-        'mysqlclient',
-        'imgurpython',
-        'python-twitter',
-        'configparser>=3.5.0b2',
     ],
 )
