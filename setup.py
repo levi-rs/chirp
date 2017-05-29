@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="chirp",
-    version="0.0.1",
+    version="0.0.2",
     description="Twitter bot for posting dank memes",
     packages=find_packages(),
     test_suite="tests",
