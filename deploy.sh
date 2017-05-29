@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cd /opt/chirp
-source env/bin/activate
+source venv/bin/activate
 git pull
 pip install --upgrade -e .
 
